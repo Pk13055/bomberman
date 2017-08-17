@@ -24,6 +24,34 @@ types = {
 	_enemy : "Enemy"
 }
 
+'''
+	Allow certain inputs and translate to easier to read format
+	UP : 0
+	DOWN : 1
+	LEFT : 2
+	RIGHT : 3
+	BOMB : 4
+'''
+
+UP, DOWN, LEFT, RIGHT, BOMB, QUIT = range(6)
+
+_allowed_inputs = { 
+	UP 		: ['w', '\x1b[A'], \
+	DOWN 	: ['s', '\x1b[B'], \
+	LEFT 	: ['a', '\x1b[D'], \
+	RIGHT 	: ['d', '\x1b[C'], \
+	BOMB 	: ['b'],		   \
+	QUIT 	: ['q']
+}
+
+def get_input(key):
+	for x in _allowed_inputs:
+		if key in _allowed_inputs[x]:
+			return x
+	return None
+
+
+# up down right left
 class _Getch:
     """Gets a single character from standard input.  Does not echo to the
 screen."""

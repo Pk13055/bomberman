@@ -5,17 +5,10 @@
 from objects import Wall
 import numpy as np
 import config
+import sys
+from os import system
 
-def printb(b):
-	for r in range(b.shape[0]):
-		for c in range(b.shape[-1]):
-			try:
-				print(b[r,c].decode(), end = "")
-			except:
-				print(b[r,c], end = "")
-		print()
-
-# preferred size = 42 x 84
+ # preferred size = (34, 76)
 class Board:
 	def __init__(self, m, n):
 		
@@ -105,14 +98,44 @@ class Board:
 	# method to spawn the main player
 	def spawn(self, obj):
 		if obj.get_type() == config.types[config._bomb_man]:
+			height, width = obj.get_size()
+			x, y = obj.x - 1, obj.y - 1
+			self._b[y: y + height, x: x + width ] = obj.structure
 			return True
 		else:
 			print("Cannot spawn non-player object")
 			return False
 
+	# to process the key press and take according action
+	def process_input(self, key_press):
+		return True
+		if key_press == config.UP:
+			sys.stdout.write("UP")
+		elif key_press == config.DOWN:
+			sys.stdout.write("DOWN")
+		elif key_press == config.LEFT:
+			sys.stdout.write("LEFT")
+		elif key_press == config.RIGHT:
+			sys.stdout.write("RIGHT")
+		elif key_press == config.BOMB:		
+			sys.stdout.write("BOMB")
+
+
+
 	# displaying the board at every frame
 	def render(self):
-		pass
+		sys.stdout.flush()
+		# print("\x1b[{};{}H".format(0,0))
+		system('clear')
+		temp_board = np.matrix(self._b)
+		for row in range(self.height):
+			for col in range(self.width):
+				try:
+					sys.stdout.write(temp_board[row, col].decode()) 
+				except:
+					sys.stdout.write(temp_board[row, col]) 
+			sys.stdout.write("\n")
+		del temp_board
 
 	# printing the board for debugging purposes
 	def __repr__(self):
