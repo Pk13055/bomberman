@@ -72,8 +72,8 @@ class Bomb(Object):
 		self.timer = 0
 		self.active = False
 		self.is_killable = True
-		self.structure[:, :] = np.matrix([['[',self.ch,self.ch,']'],\
-			['[',self.ch, self.ch, ']']])
+		self.structure[:, :] = np.matrix([['[',self._ch,self._ch,']'],\
+			['[',self._ch, self._ch, ']']])
 
 	# begin detonating the bomb (happens one frame after)
 	def detonate(self, time):

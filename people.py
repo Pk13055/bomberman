@@ -40,7 +40,7 @@ class Person:
 				board.clear_obj(self)
 			self._x, self._y = new_x, new_y
 			return True
-		return False
+		return False	
 
 	def __repr__(self):
 		return "<Person : %s | (%d, %d)>" % (self.get_type(), self._x, self._y)
@@ -49,11 +49,13 @@ class Person:
 # this is the class for the bomber 
 # methods that the bomber can execute are written here 
 class Bomber(Person):
-	def __init__(self, x, y):
+	def __init__(self, x, y, lives = config.lives[1], bombs = config.bombs[1]):
 		super(Bomber, self).__init__(x, y, config._bomb_man)
 		temp_skel = np.matrix([['[',self._ch,self._ch,']'],\
 			[config._empty,']','[',config._empty]])
 		self.structure[:, :] = temp_skel
+		self.lives = lives
+		self.bombs = bombs
 		del temp_skel
 
 

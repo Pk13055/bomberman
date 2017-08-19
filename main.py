@@ -1,12 +1,13 @@
 #!/home/pratik/anaconda3/bin/python3.6
 
-import board
-import people
-import objects
-import random
 import config
+import board
+import people, objects
+import random
+import sys
+import signal
 from sys import argv as rd
-
+from time import sleep
 
 # this attaches the enemies at random locations
 def spawn(typ, total, board):
@@ -20,7 +21,6 @@ def spawn(typ, total, board):
 			return False
 		run_count = 0
 		while True:
-			print(run_count)
 			new_x, new_y = random.choice(board.init_points)
 			if e.update_location(board, new_x, new_y, True):
 				break
@@ -35,11 +35,6 @@ def main():
 	except:
 		height, width = (34, 76)
 
-	# make the board and player
-	bd = board.Board(height, width)
-	player = people.Bomber(5, 3) # always spawns at top left
-	# spawning the player on the board
-	bd.spawn(player)
 
 	try:
 		level = int(input("Choose level [[1], 2, 3] :"))
@@ -48,30 +43,45 @@ def main():
 	except:
 		level = 1
 	
+	# make the board and player
+	bd = board.Board(height, width, level)
+	
+	player = people.Bomber(5, 3, config.lives[level], \
+		config.bombs[level]) # always spawns at top left
+	# spawning the player on the board
+	bd.spawn(player)
+
 	print("Initializing enemies, bricks ...")
-	if spawn(config._enemy, config.enemies[level], bd) and \
-		spawn(config._bricks, config.enemies[level], bd):
+	if not (spawn(config._enemy, config.enemies[level], bd) and \
+			spawn(config._bricks, config.bricks[level], bd)):
 		print("Object Spawn Error")
+		return False
+	
+	print("Objects spawned successfully", "Rendering board", sep = "\n")
+	sleep(1)
 
 	bd.render()
 
 	p_input = -1
 	# main loop which renders the game
-	
 	while True:
-		print("'q' to quit | 'b' to drop bomb | WASD control | %d" % p_input)
-		p_input = config.get_input(config.getch())
+		print("'q' : quit | 'b' : drop bomb || Lives %d | Bombs %d | F%d " \
+			% (player.lives, player.bombs, bd.frame_counter))
 		
-		# don't render new frame unless valid input
-		if p_input == -1:
-			continue
-		elif p_input == config.QUIT:
+		if not player.lives:
+			print("0 LIVES LEFT!! GAME OVER!")
 			break
 
-		bd.process_input(p_input)
+		p_input = config.get_input(config.getch())
 
-		# print(bd)
+		if p_input == config.QUIT:
+			break
+
+		bd.process_input(player, p_input)
+		bd.update_frame()
 		bd.render()
+
+	bd.clear_storage()
 
 if __name__ == '__main__':
 	main()

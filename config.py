@@ -5,6 +5,7 @@ directions, etc
 
 '''
 
+# ch repr of objects
 _wall = "X"
 _bricks = "/"
 _bomb_man = "B"
@@ -13,6 +14,7 @@ _expl = "e"
 _bomb = "O"
 _empty = " "
 
+# types of objects
 types = {
 	
 	_empty : "Unassigned",
@@ -25,8 +27,21 @@ types = {
 	_enemy : "Enemy"
 }
 
+# number of properties per level (0 is debug)
 enemies = [0, 2, 3, 4]
 bricks 	= [0, 5, 7, 9]
+lives   = [10, 3, 5, 7]
+bombs   = [20, 5, 6, 7]
+timers  = [
+    [5],
+    [3],
+    [3, 5],
+    [2, 4, 7]
+]
+
+# scaling and move factor
+x_fac, y_fac = (4, 2)
+
 
 '''
 	Allow certain inputs and translate to easier to read format
@@ -37,8 +52,12 @@ bricks 	= [0, 5, 7, 9]
 	BOMB : 4
 '''
 
+# key presses
 UP, DOWN, LEFT, RIGHT, BOMB, QUIT = range(6)
+DIR = [UP, DOWN, LEFT, RIGHT]
+INVALID = -1
 
+# allowed inputs
 _allowed_inputs = { 
 	UP 		: ['w', '\x1b[A'], \
 	DOWN 	: ['s', '\x1b[B'], \
@@ -52,13 +71,11 @@ def get_input(key):
 	for x in _allowed_inputs:
 		if key in _allowed_inputs[x]:
 			return x
-	return -1
+	return INVALID
 
 
-# up down right left
+# Gets a single character from standard input.  Does not echo to the screen.
 class _Getch:
-    """Gets a single character from standard input.  Does not echo to the
-screen."""
     def __init__(self):
         try:
             self.impl = _GetchWindows()

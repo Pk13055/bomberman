@@ -2,15 +2,16 @@
 	Contains the board class along with the methods and other features
 '''
 
-from objects import Wall
+from objects import Wall, Bomb
 import numpy as np
 import config
 import sys
+import random
 from os import system
 
  # preferred size = (34, 76)
 class Board:
-	def __init__(self, m, n):
+	def __init__(self, m, n, level):
 		
 		assert(type(n) == int)
 		assert(type(m) == int)
@@ -22,6 +23,7 @@ class Board:
 		self._b[:, :] = config._empty
 		self.frame_counter = 0
 		self.init_points = []
+		self.level = level
 		
 		self.init_board()
 
@@ -31,6 +33,9 @@ class Board:
 			config.types[config._bricks] : [],
 			config.types[config._enemy] : []
 		}
+
+		# this stores the player(s)
+		self._players = []
 
 	
 	# initialize and setup the frame of the board
@@ -67,13 +72,17 @@ class Board:
 			self._b[(r - 1) * w_height: (r * w_height), : ] = cur_row
 
 		# create the inital points for spawning objects
-		# subtracting two edge blocks for each top bottom and dividing by two for range of motion
-		fp, x_fac, y_fac = (5, 3), 4, 2
-		total_block_x = int((self.width / x_fac - 2) / 2 + 1)  # each object is 4 px wide
-		total_block_y = int((self.height / y_fac  - 2) / 2 + 1) # each object is 2px tall
+		# subtracting two edge blocks for each top bottom
+		# and dividing by two for range of motion
+		fp = (5, 3)
+		total_block_x = int((self.width / \
+			config.x_fac - 2) / 2 + 1)  # each object is 4 px wide
+		total_block_y = int((self.height / \
+			config.y_fac  - 2) / 2 + 1) # each object is 2px tall
 		for r in range(total_block_x):
 			for c in range(total_block_y):
-				self.init_points.append( (fp[0] + r * (2 * x_fac), fp[-1] + c * (2 * y_fac)) )
+				self.init_points.append( (fp[0] + r * (2 * config.x_fac),\
+				 fp[-1] + c * (2 * config.y_fac)) )
 		self.init_points = list(set(self.init_points))
 
 	# reset the borad at the end of a life 
@@ -85,19 +94,10 @@ class Board:
 
 	# main function to check updates at every frame
 	def update_frame(self):
+		for _ in self._storage[config.types[config._enemy]]:
+			_dir = random.choice(config.DIR)
+			self.process_input(_, _dir)
 		self.frame_counter += 1
-
-	# check if new binding space is occupied else if occupied
-	def path_clear(self, obj):
-		height, width =  obj.get_size()
-		x_pos, y_pos = obj.get_coords()
-		
-		emp_comp = np.chararray(obj.get_size())
-		emp_comp[:, :] = config._empty
-
-		return np.all(self._b[y_pos - 1: y_pos - 1 + height, x_pos - 1:\
-		 x_pos - 1 + width] == emp_comp)
-
 
 	# add to storage
 	def add_storage(self, obj):
@@ -128,9 +128,39 @@ class Board:
 			except:
 				return False
 
+	# check if new binding space is occupied else if occupied
+	def path_check(self, obj):
+		
+		height, width =  obj.get_size()
+		x_pos, y_pos = obj.get_coords()
+		
+		emp_comp = np.chararray(obj.get_size())
+		emp_comp[:, :] = config._empty
+
+		if obj.get_type() == config.types[config._bomb]:
+			for enemy in self._storage[config.types[config._enemy]]:
+				if enemy.get_coords() == obj.get_coords():
+					self.clear_storage(enemy)
+			return True
+
+		if obj.get_type() == config.types[config._enemy]:
+			for player in self._players:
+				if player.get_coords() == obj.get_coords():
+					player.lives -= 1
+					return True 
+
+		elif obj in self._players:
+			for enemy in self._storage[config.types[config._enemy]]:
+				if obj.get_coords() == enemy.get_coords():
+					obj.lives -= 1
+					return True
+
+		return np.all(self._b[y_pos - 1: y_pos - 1 + height, x_pos - 1:\
+		 x_pos - 1 + width] == emp_comp)
+
 	# draws the object on the board
 	def draw_obj(self, obj):
-		if self.path_clear(obj):
+		if self.path_check(obj):
 			height, width = obj.get_size()
 			x, y = obj.get_coords()
 			self._b[y - 1: y - 1 + height, x - 1: x - 1 + width] = obj.structure
@@ -142,6 +172,9 @@ class Board:
 		if obj.get_type() != config.types[config._wall]:
 			height, width = obj.get_size()
 			x, y = obj.get_coords()
+			if np.all(self._b[y - 1: y - 1 + height, x - 1: x - 1 + width] == \
+							Bomb(0, 0).structure):
+				return True
 			self._b[y - 1: y - 1 + height, x - 1: x - 1 + width] = config._empty
 			return True
 		return False
@@ -160,24 +193,41 @@ class Board:
 			x, y = obj.get_coords()
 			x, y = x - 1, y - 1
 			self._b[y: y + height, x: x + width ] = obj.structure
+			self._players.append(obj)
 			return True
 		else:
 			print("Cannot spawn non-player object")
 			return False
 
 	# to process the key press and take according action
-	def process_input(self, key_press):
-		return True
-		if key_press == config.UP:
-			pass
-		elif key_press == config.DOWN:
-			pass
-		elif key_press == config.LEFT:
-			pass
-		elif key_press == config.RIGHT:
-			pass
-		elif key_press == config.BOMB:		
-			pass
+	def process_input(self, player, key_press):
+		res = False
+		if key_press in config.DIR:
+			x, y = player.get_coords()
+			
+			# inverted up down calc because of top left origin
+			if key_press == config.UP:
+				y -= config.y_fac
+			elif key_press == config.DOWN:
+				y += config.y_fac
+			elif key_press == config.LEFT:
+				x -= config.x_fac
+			elif key_press == config.RIGHT:
+				x += config.x_fac
+
+			res = player.update_location(self, x, y)
+
+		# place the bomb at the given location
+		elif player in self._players and key_press == config.BOMB:		
+			x, y = player.get_coords()
+			if player.bombs:
+				bomb = Bomb(x, y)
+				self.attach_object(bomb)
+				bomb.detonate(random.choice(config.timers[self.level]))
+				player.bombs -= 1
+			return True
+
+		return res
 
 
 
