@@ -5,6 +5,7 @@ import people, objects
 import random
 import sys, signal
 from sys import argv as rd
+from os import system
 from time import sleep
 
 # this attaches the enemies at random locations
@@ -66,8 +67,10 @@ def main():
 		print("'q' : quit | 'b' : drop bomb || Lives %d | Bombs %d | F%d " \
 			% (player.lives, player.bombs, bd.frame_counter))
 		
-		if bd.is_over():
-			print("Congratulations, all enemies killed!")
+		try:
+			bd.is_over(player)
+		except Exception as exc:
+			print(exc.args[0])
 			break
 
 		if not player.lives:
@@ -84,6 +87,9 @@ def main():
 		bd.render()
 
 	bd.clear_storage()
+	sleep(1)
+	system('clear')
+
 
 if __name__ == '__main__':
 	main()

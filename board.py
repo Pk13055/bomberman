@@ -95,28 +95,23 @@ class Board:
 
 	# main function to check updates at every frame
 	def update_frame(self):
-		# clean up debris of the previous bomb
+		
+		# clean up debris of the previous bombs
 		for bomb in self._storage[config.types[config._bomb]]:
 			if not bomb.active:
 				bomb.structure[:, :] = config._empty
 				x, y = bomb.get_coords()
 				height, width = bomb.get_size()
 				
-				coords_check = [(x + 1 * x_fac, y), (x + 2 * x_fac, y), (x - 1 * x_fac, y),\
-				 (x - 2 * x_fac, y), (x, y + 1 * y_fac), (x, y + 2 * y_fac), \
-				 (x, y - 1 * y_fac), (x, y - 2 * y_fac) ]
+				# removing the bomb as well
+				bomb.blast_radius.insert(0, bomb.get_coords())
 				
-				for x_i, y_i in coords_check:
-					try: 
-						if self._b[x_i - 1, y_i - 1] == config._wall:
-							raise IndexError
-					except IndexError:
-						coords_check.remove((x_i, y_i))
-						continue
+				for x_i, y_i in bomb.blast_radius:
+					self._b[y_i - 1 : y_i - 1 + height, x_i -1 : x_i - 1 + width] = config._empty
 
-					self._b[y_i - 1 : y_i - 1 + height, x_i -1 : x_i - 1 + width] = bomb.structure
+				self._storage[config.types[config._bomb]].remove(bomb)
 
-		# check if any bomb has detonated
+		# check if any bomb needs to detonate
 		for bomb in self._storage[config.types[config._bomb]]:
 			if (not bomb.timer) and bomb.active:
 				
@@ -124,38 +119,35 @@ class Board:
 				x, y = bomb.get_coords()
 				height, width = bomb.get_size()
 				
-				coords_check = [(x + 1 * x_fac, y), (x + 2 * x_fac, y), (x - 1 * x_fac, y),\
-				 (x - 2 * x_fac, y), (x, y + 1 * y_fac), (x, y + 2 * y_fac), \
-				 (x, y - 1 * y_fac), (x, y - 2 * y_fac) ]
-				
-				for x_i, y_i in coords_check:
-					try: 
-						if self._b[x_i - 1, y_i - 1] == config._wall:
-							coords_check.remove((x_i, y_i))
+				for x_i, y_i in bomb.blast_radius:
+					try:
+						if np.all(self._b[y_i - 1 : y_i - 1 + height, \
+							x_i - 1 : x_i - 1 + width] == Wall(0, 0).structure):
+							raise IndexError
 					except IndexError:
-						coords_check.remove((x_i, y_i))
+						bomb.blast_radius.remove((x_i, y_i))
 						continue
 
+					# kill all enemies in trajectory
 					for en in self._storage[config.types[config._enemy]]:
 						if en.get_coords() == (x_i, y_i) and en.is_killable:
 							self.clear_storage(en)
+					# kill all players in trajectory
 					for pl in self._players:
 						if pl.get_coords() == (x_i, y_i) and pl.is_killable:
 							pl.lives = 0
+					# destory all bricks in trajectory
 					for brick in self._storage[config.types[config._bricks]]:
 						if brick.get_coords() == (x_i, y_i):
 							self.clear_storage(brick)
-
+					# detonate other bombs by chain
 					for bmb in self._storage[config.types[config._bomb]]:
-						if bmb != bomb and bmb.get_coords() == (x_i, y_i):
+						if bmb.active and bmb != bomb and bmb.get_coords() in bomb.blast_radius:
 							bmb.timer = 0
 
 				# rendering the "explosion"
-				for x_i, y_i in coords_check:
-					try:
-						self._b[y_i - 1 : y_i - 1 + height, x_i -1 : x_i - 1 + width] = bomb.structure
-					except:
-						pass
+				for x_i, y_i in bomb.blast_radius:
+					self._b[y_i - 1 : y_i - 1 + height, x_i -1 : x_i - 1 + width] = config._expl
 
 				bomb.active = False
 
@@ -169,6 +161,7 @@ class Board:
 		for _ in self._storage[config.types[config._enemy]]:
 			_dir = random.choice(config.DIR)
 			self.process_input(_, _dir)
+		
 		self.frame_counter += 1
 
 	# add to storage
@@ -317,8 +310,14 @@ class Board:
 		return res
 
 	# check to see if all the enemies have been killed
-	def is_over(self):
-		return (self.level) and (len(self._storage[config.types[config._enemy]]) == 0)
+	def is_over(self, player):
+		if (self.level): 
+			if (len(self._storage[config.types[config._enemy]]) == 0):
+				raise Exception("Congratulations, all enemies killed!")
+			elif (player.bombs == 0 and \
+				len(self._storage[config.types[config._bomb]]) == 0):
+				raise Exception("It's a tie!")
+		return True
 
 	# displaying the board at every frame
 	def render(self):

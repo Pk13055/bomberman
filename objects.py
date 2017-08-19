@@ -6,6 +6,7 @@
 '''
 
 import config
+from config import x_fac, y_fac
 import numpy as np
 
 # bombs, walls, bricks all will be of this type
@@ -74,6 +75,9 @@ class Bomb(Object):
 		self.is_killable = True
 		self.structure[:, :] = np.matrix([['[',self._ch,self._ch,']'],\
 			['[',self._ch, self._ch, ']']])
+		self.blast_radius = [(x + 1 * x_fac, y), (x + 2 * x_fac, y),\
+		(x - 1 * x_fac, y), (x - 2 * x_fac, y), (x, y + 1 * y_fac), (x, y + 2 * y_fac), \
+		(x, y - 1 * y_fac), (x, y - 2 * y_fac)]
 
 	# begin detonating the bomb (happens one frame after)
 	def detonate(self, time):
