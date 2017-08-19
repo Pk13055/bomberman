@@ -3,17 +3,31 @@
 import board
 import people
 import objects
-import sys
-from config import getch, get_input, QUIT
+import random
+import config
 from sys import argv as rd
 
-# this attaches the enemies at random locations
-def spawn_enemies(no_enemies, board):
-	pass
 
-# this attaches the bricks at random locations
-def spawn_bricks(no_bricks, board):
-	pass
+# this attaches the enemies at random locations
+def spawn(typ, total, board):
+	for _ in range(total):
+		x, y = (1, 1)
+		if typ == config._enemy:
+			e = people.Enemy(x, y)
+		elif typ == config._bricks:
+			e = objects.Bricks(x, y)
+		else:
+			return False
+		run_count = 0
+		while True:
+			print(run_count)
+			new_x, new_y = random.choice(board.init_points)
+			if e.update_location(board, new_x, new_y, True):
+				break
+			run_count += 1
+		board.add_storage(e)
+
+	return True
 
 def main():
 	try:
@@ -34,24 +48,24 @@ def main():
 	except:
 		level = 1
 	
-	enemies = [0, 2, 3, 4]
-	bricks 	= [0, 5, 7, 9]
+	print("Initializing enemies, bricks ...")
+	if spawn(config._enemy, config.enemies[level], bd) and \
+		spawn(config._bricks, config.enemies[level], bd):
+		print("Object Spawn Error")
 
-	spawn_enemies(enemies[level], bd)
-	spawn_bricks(bricks[level], bd)
 	bd.render()
 
-	p_input = None
+	p_input = -1
 	# main loop which renders the game
 	
 	while True:
-		print("'q' to quit | 'b' to drop bomb | WASD control |", p_input)
-		p_input = get_input(getch())
+		print("'q' to quit | 'b' to drop bomb | WASD control | %d" % p_input)
+		p_input = config.get_input(config.getch())
 		
 		# don't render new frame unless valid input
-		if p_input is None:
+		if p_input == -1:
 			continue
-		elif p_input == QUIT:
+		elif p_input == config.QUIT:
 			break
 
 		bd.process_input(p_input)

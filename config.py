@@ -1,6 +1,7 @@
 '''
 
-contains all the symbols to be used
+contains all the symbols, constants
+directions, etc
 
 '''
 
@@ -23,6 +24,9 @@ types = {
 	_bomb_man : "Bomber",
 	_enemy : "Enemy"
 }
+
+enemies = [0, 2, 3, 4]
+bricks 	= [0, 5, 7, 9]
 
 '''
 	Allow certain inputs and translate to easier to read format
@@ -48,7 +52,7 @@ def get_input(key):
 	for x in _allowed_inputs:
 		if key in _allowed_inputs[x]:
 			return x
-	return None
+	return -1
 
 
 # up down right left

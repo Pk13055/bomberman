@@ -1,33 +1,49 @@
+
 ''' 
-	Each wall element is of this type 
+	
+	contains the structure of each object
+
 '''
 
-import numpy as np
 import config
-
+import numpy as np
 
 # bombs, walls, bricks all will be of this type
 class Object:
-	def __init__(self, x, y, ch):
+	# the x and y coords wrt top left of board
+	def __init__(self, x, y, ch = config._empty):
 		self._x = x
 		self._y = y
 		self.width = 4
 		self.height = 2
-		self.dimen = (self.width, self.height)
 		self.is_killable = False
 		self._ch = ch
-		self.structure = np.chararray(self.dimen[::-1])
+		self.structure = np.chararray((self.height, self.width))
 		self.structure[:, :] = self._ch
 		self._type = config.types[self._ch]
 
+	# returns whether "Bomber", "Enemy", etc 
 	def get_type(self):
 		return self._type
-
+	
+	# returns (height, width)
 	def get_size(self):
 		return self.structure.shape
 
+	# returns (x, y)
 	def get_coords(self):
 		return (self._x, self._y)
+
+	# update the location of the person
+	def update_location(self, board, new_x, new_y, init = False):
+		if board.draw_obj(type(self)(new_x, new_y)):
+			# if initial update, will not clear original
+			if not init:
+				board.clear_obj(self)
+			self._x, self._y = new_x, new_y
+			return True
+		return False
+
 
 # this is the repr of the wall object
 # it implements no methods and some data about each wall element
@@ -56,24 +72,43 @@ class Bomb(Object):
 		self.timer = 0
 		self.active = False
 		self.is_killable = True
+		self.structure[:, :] = np.matrix([['[',self.ch,self.ch,']'],\
+			['[',self.ch, self.ch, ']']])
 
+	# begin detonating the bomb (happens one frame after)
 	def detonate(self, time):
 		self.active = True
 		self.timer = time
 
-	def diffuse(self):
+	def countdown(self):
+		if not self.timer:
+			self._explode()
+			return None
+		elif self.active:
+			self.timer -= 1
+			self.structure[:,1:3] = str(self.timer)
+			return True
+		else:
+			return False
+
+	# after the timer is done, we have to explode, ie spread the bomb
+	def _explode(self):
 		self.active = False
 		self.timer = 0
+		# add here the explosion metric
 
 	def __repr__(self):
 		return "<Bomb (%d, %d) | Active : %s | %d frames left>" % \
-			(self._x, self.y, self.active, self.timer)
+			(self._x, self._y, self.active, self.timer)
 
 
-# this class implements the bomb object 
+# this class implements the bricks object 
 class Bricks(Object):
 	def __init__(self, x, y):
 		super(Bricks, self).__init__(x, y, config._bricks)
 		self.is_killable = True
-		self.structure
-		pass
+		self.structure[:, :] = self._ch
+
+	def __repr__(self):
+		return "<Bomb (%d, %d) | Active : %s | %d frames left>" % \
+			(self._x, self._y, self.active, self.timer)
