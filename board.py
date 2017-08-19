@@ -3,6 +3,7 @@
 '''
 
 from objects import Wall, Bomb
+from config import x_fac, y_fac
 import numpy as np
 import config
 import sys
@@ -94,6 +95,77 @@ class Board:
 
 	# main function to check updates at every frame
 	def update_frame(self):
+		# clean up debris of the previous bomb
+		for bomb in self._storage[config.types[config._bomb]]:
+			if not bomb.active:
+				bomb.structure[:, :] = config._empty
+				x, y = bomb.get_coords()
+				height, width = bomb.get_size()
+				
+				coords_check = [(x + 1 * x_fac, y), (x + 2 * x_fac, y), (x - 1 * x_fac, y),\
+				 (x - 2 * x_fac, y), (x, y + 1 * y_fac), (x, y + 2 * y_fac), \
+				 (x, y - 1 * y_fac), (x, y - 2 * y_fac) ]
+				
+				for x_i, y_i in coords_check:
+					try: 
+						if self._b[x_i - 1, y_i - 1] == config._wall:
+							raise IndexError
+					except IndexError:
+						coords_check.remove((x_i, y_i))
+						continue
+
+					self._b[y_i - 1 : y_i - 1 + height, x_i -1 : x_i - 1 + width] = bomb.structure
+
+		# check if any bomb has detonated
+		for bomb in self._storage[config.types[config._bomb]]:
+			if (not bomb.timer) and bomb.active:
+				
+				bomb.structure[:, :] = config._expl
+				x, y = bomb.get_coords()
+				height, width = bomb.get_size()
+				
+				coords_check = [(x + 1 * x_fac, y), (x + 2 * x_fac, y), (x - 1 * x_fac, y),\
+				 (x - 2 * x_fac, y), (x, y + 1 * y_fac), (x, y + 2 * y_fac), \
+				 (x, y - 1 * y_fac), (x, y - 2 * y_fac) ]
+				
+				for x_i, y_i in coords_check:
+					try: 
+						if self._b[x_i - 1, y_i - 1] == config._wall:
+							coords_check.remove((x_i, y_i))
+					except IndexError:
+						coords_check.remove((x_i, y_i))
+						continue
+
+					for en in self._storage[config.types[config._enemy]]:
+						if en.get_coords() == (x_i, y_i) and en.is_killable:
+							self.clear_storage(en)
+					for pl in self._players:
+						if pl.get_coords() == (x_i, y_i) and pl.is_killable:
+							pl.lives = 0
+					for brick in self._storage[config.types[config._bricks]]:
+						if brick.get_coords() == (x_i, y_i):
+							self.clear_storage(brick)
+
+					for bmb in self._storage[config.types[config._bomb]]:
+						if bmb != bomb and bmb.get_coords() == (x_i, y_i):
+							bmb.timer = 0
+
+				# rendering the "explosion"
+				for x_i, y_i in coords_check:
+					try:
+						self._b[y_i - 1 : y_i - 1 + height, x_i -1 : x_i - 1 + width] = bomb.structure
+					except:
+						pass
+
+				bomb.active = False
+
+
+		# countdown everybomb 
+		for bomb in self._storage[config.types[config._bomb]]:
+			bomb.countdown()
+			self.refresh_obj(bomb)
+
+		# move the enemies randomly
 		for _ in self._storage[config.types[config._enemy]]:
 			_dir = random.choice(config.DIR)
 			self.process_input(_, _dir)
@@ -121,9 +193,7 @@ class Board:
 		else:
 			typ = obj.get_type()
 			try:
-				ind =  self._storage[typ].index(obj)
-				self._storage[typ] = self._storage[typ][:ind] \
-					+ self._storage[typ][ind + 1:]
+				self._storage[typ].remove(obj)
 				return True
 			except:
 				return False
@@ -137,18 +207,21 @@ class Board:
 		emp_comp = np.chararray(obj.get_size())
 		emp_comp[:, :] = config._empty
 
+		# bomb can overwrite enemies
 		if obj.get_type() == config.types[config._bomb]:
 			for enemy in self._storage[config.types[config._enemy]]:
 				if enemy.get_coords() == obj.get_coords():
 					self.clear_storage(enemy)
 			return True
 
+		# enemies can walk into players and kill
 		if obj.get_type() == config.types[config._enemy]:
 			for player in self._players:
 				if player.get_coords() == obj.get_coords():
 					player.lives -= 1
 					return True 
 
+		# players can walk into enemies
 		elif obj in self._players:
 			for enemy in self._storage[config.types[config._enemy]]:
 				if obj.get_coords() == enemy.get_coords():
@@ -158,6 +231,15 @@ class Board:
 		return np.all(self._b[y_pos - 1: y_pos - 1 + height, x_pos - 1:\
 		 x_pos - 1 + width] == emp_comp)
 
+	# refreshes the object on the board (meant to be used only with bombs)
+	def refresh_obj(self, obj):
+		if obj.get_type() == config.types[config._bomb]:
+			x, y = obj.get_coords()
+			height, width = obj.get_size()
+			self._b[y - 1: y - 1 + height, x - 1: x - 1 + width] = obj.structure
+			return True
+		return False
+
 	# draws the object on the board
 	def draw_obj(self, obj):
 		if self.path_check(obj):
@@ -165,6 +247,7 @@ class Board:
 			x, y = obj.get_coords()
 			self._b[y - 1: y - 1 + height, x - 1: x - 1 + width] = obj.structure
 			return True
+		
 		return False	
 
 	# clears the object from the board by an object
@@ -172,11 +255,15 @@ class Board:
 		if obj.get_type() != config.types[config._wall]:
 			height, width = obj.get_size()
 			x, y = obj.get_coords()
+
+			# add exception for clearing the bomb
 			if np.all(self._b[y - 1: y - 1 + height, x - 1: x - 1 + width] == \
 							Bomb(0, 0).structure):
 				return True
+			
 			self._b[y - 1: y - 1 + height, x - 1: x - 1 + width] = config._empty
 			return True
+		
 		return False
 
 	# size being a (height, width) tuple
@@ -229,7 +316,9 @@ class Board:
 
 		return res
 
-
+	# check to see if all the enemies have been killed
+	def is_over(self):
+		return (self.level) and (len(self._storage[config.types[config._enemy]]) == 0)
 
 	# displaying the board at every frame
 	def render(self):

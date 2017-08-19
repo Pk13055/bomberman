@@ -1,11 +1,9 @@
 #!/home/pratik/anaconda3/bin/python3.6
 
-import config
-import board
+import config, board
 import people, objects
 import random
-import sys
-import signal
+import sys, signal
 from sys import argv as rd
 from time import sleep
 
@@ -68,6 +66,10 @@ def main():
 		print("'q' : quit | 'b' : drop bomb || Lives %d | Bombs %d | F%d " \
 			% (player.lives, player.bombs, bd.frame_counter))
 		
+		if bd.is_over():
+			print("Congratulations, all enemies killed!")
+			break
+
 		if not player.lives:
 			print("0 LIVES LEFT!! GAME OVER!")
 			break

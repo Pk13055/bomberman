@@ -81,21 +81,13 @@ class Bomb(Object):
 		self.timer = time
 
 	def countdown(self):
-		if not self.timer:
-			self._explode()
-			return None
-		elif self.active:
+		if self.active:
 			self.timer -= 1
 			self.structure[:,1:3] = str(self.timer)
 			return True
-		else:
-			return False
-
-	# after the timer is done, we have to explode, ie spread the bomb
-	def _explode(self):
-		self.active = False
-		self.timer = 0
-		# add here the explosion metric
+		
+		if not self.timer:
+			self.structure[:, :] = config._expl
 
 	def __repr__(self):
 		return "<Bomb (%d, %d) | Active : %s | %d frames left>" % \
