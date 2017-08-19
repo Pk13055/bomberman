@@ -73,10 +73,6 @@ def main():
 			print(exc.args[0])
 			break
 
-		if not player.lives:
-			print("0 LIVES LEFT!! GAME OVER!")
-			break
-
 		p_input = config.get_input(config.getch())
 
 		if p_input == config.QUIT:
@@ -87,8 +83,13 @@ def main():
 		bd.render()
 
 	bd.clear_storage()
-	sleep(1)
-	system('clear')
+	for c, player in enumerate(bd.players):
+		print("Player %d score :" % c, player.score)
+
+	sleep(3)
+	print("Press ANY KEY to exit")
+	a = config.getch()
+	system('reset')
 
 
 if __name__ == '__main__':

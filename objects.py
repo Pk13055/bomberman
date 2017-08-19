@@ -78,6 +78,7 @@ class Bomb(Object):
 		self.blast_radius = [(x + 1 * x_fac, y), (x + 2 * x_fac, y),\
 		(x - 1 * x_fac, y), (x - 2 * x_fac, y), (x, y + 1 * y_fac), (x, y + 2 * y_fac), \
 		(x, y - 1 * y_fac), (x, y - 2 * y_fac)]
+		self.owner = None
 
 	# begin detonating the bomb (happens one frame after)
 	def detonate(self, time):

@@ -36,7 +36,7 @@ class Board:
 		}
 
 		# this stores the player(s)
-		self._players = []
+		self.players = []
 
 	
 	# initialize and setup the frame of the board
@@ -120,11 +120,21 @@ class Board:
 				height, width = bomb.get_size()
 				
 				for x_i, y_i in bomb.blast_radius:
+					# if a wall blocks the way remove the blast coords
 					try:
 						if np.all(self._b[y_i - 1 : y_i - 1 + height, \
 							x_i - 1 : x_i - 1 + width] == Wall(0, 0).structure):
 							raise IndexError
-					except IndexError:
+					except:
+						if x - x_i == 1 * x_fac:
+							bomb.blast_radius.remove((x + 2 * x_fac, y))
+						elif x - x_i == -1 * x_fac:
+							bomb.blast_radius.remove((x - 2 * x_fac, y))
+						elif y - y_i == 1 * y_fac:
+							bomb.blast_radius.remove((x, y - 2 * y_fac))
+						elif y - y_i == -1 * y_fac:
+							bomb.blast_radius.remove((x, y + 2 * y_fac))
+
 						bomb.blast_radius.remove((x_i, y_i))
 						continue
 
@@ -132,14 +142,16 @@ class Board:
 					for en in self._storage[config.types[config._enemy]]:
 						if en.get_coords() == (x_i, y_i) and en.is_killable:
 							self.clear_storage(en)
+							bomb.owner.score += config.scores[config._enemy]
 					# kill all players in trajectory
-					for pl in self._players:
+					for pl in self.players:
 						if pl.get_coords() == (x_i, y_i) and pl.is_killable:
 							pl.lives = 0
 					# destory all bricks in trajectory
 					for brick in self._storage[config.types[config._bricks]]:
 						if brick.get_coords() == (x_i, y_i):
 							self.clear_storage(brick)
+							bomb.owner.score += config.scores[config._bricks]
 					# detonate other bombs by chain
 					for bmb in self._storage[config.types[config._bomb]]:
 						if bmb.active and bmb != bomb and bmb.get_coords() in bomb.blast_radius:
@@ -209,13 +221,13 @@ class Board:
 
 		# enemies can walk into players and kill
 		if obj.get_type() == config.types[config._enemy]:
-			for player in self._players:
+			for player in self.players:
 				if player.get_coords() == obj.get_coords():
 					player.lives -= 1
 					return True 
 
 		# players can walk into enemies
-		elif obj in self._players:
+		elif obj in self.players:
 			for enemy in self._storage[config.types[config._enemy]]:
 				if obj.get_coords() == enemy.get_coords():
 					obj.lives -= 1
@@ -273,7 +285,7 @@ class Board:
 			x, y = obj.get_coords()
 			x, y = x - 1, y - 1
 			self._b[y: y + height, x: x + width ] = obj.structure
-			self._players.append(obj)
+			self.players.append(obj)
 			return True
 		else:
 			print("Cannot spawn non-player object")
@@ -298,10 +310,11 @@ class Board:
 			res = player.update_location(self, x, y)
 
 		# place the bomb at the given location
-		elif player in self._players and key_press == config.BOMB:		
+		elif player in self.players and key_press == config.BOMB:		
 			x, y = player.get_coords()
 			if player.bombs:
 				bomb = Bomb(x, y)
+				bomb.owner = player
 				self.attach_object(bomb)
 				bomb.detonate(random.choice(config.timers[self.level]))
 				player.bombs -= 1
@@ -317,6 +330,8 @@ class Board:
 			elif (player.bombs == 0 and \
 				len(self._storage[config.types[config._bomb]]) == 0):
 				raise Exception("It's a tie!")
+			elif player.lives == 0:
+				raise Exception("No lives left! GAME OVER!")
 		return True
 
 	# displaying the board at every frame

@@ -26,7 +26,11 @@ types = {
 	_bomb_man : "Bomber",
 	_enemy : "Enemy"
 }
-
+# scores
+scores = {
+    _bricks : 20,
+    _enemy : 100
+}
 # number of properties per level (0 is debug)
 enemies = [0, 2, 3, 4]
 bricks 	= [0, 5, 7, 9]
