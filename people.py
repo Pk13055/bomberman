@@ -56,6 +56,7 @@ class Bomber(Person):
 		self.structure[:, :] = temp_skel
 		self.lives = lives
 		self.bombs = bombs
+		self.score = 0
 		del temp_skel
 
 
