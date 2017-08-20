@@ -7,6 +7,7 @@ import sys, signal
 from sys import argv as rd
 from os import system
 from time import sleep
+import datetime
 
 # this attaches the enemies at random locations
 def spawn(typ, total, board):
@@ -34,63 +35,68 @@ def main():
 	except:
 		height, width = (34, 76)
 
+	a = 'r'
 
-	try:
-		level = int(input("Choose level [[1], 2, 3] :"))
-		if level not in [0, 1, 2, 3]:
-			raise Exception
-	except:
-		level = 1
-	
-	# make the board and player
-	bd = board.Board(height, width, level)
-	
-	player = people.Bomber(5, 3, config.lives[level], \
-		config.bombs[level]) # always spawns at top left
-	# spawning the player on the board
-	bd.spawn(player)
+	while a == 'r':
 
-	print("Initializing enemies, bricks ...")
-	if not (spawn(config._enemy, config.enemies[level], bd) and \
-			spawn(config._bricks, config.bricks[level], bd)):
-		print("Object Spawn Error")
-		return False
-	
-	print("Objects spawned successfully", "Rendering board", sep = "\n")
-	sleep(1)
-
-	bd.render()
-
-	p_input = -1
-	# main loop which renders the game
-	while True:
-		print("'q' : quit | 'b' : drop bomb || Lives %d | Bombs %d | F%d " \
-			% (player.lives, player.bombs, bd.frame_counter))
-		
 		try:
-			bd.is_over(player)
-		except Exception as exc:
-			print(exc.args[0])
-			break
+			level = int(input("Choose level [[1], 2, 3] :"))
+			if level not in [0, 1, 2, 3]:
+				raise Exception
+		except:
+			level = 1
+		
+		# make the board and player
+		bd = board.Board(height, width, level)
+		
+		player = people.Bomber(5, 3, config.lives[level], \
+			config.bombs[level]) # always spawns at top left
+		# spawning the player on the board
+		bd.spawn(player)
 
-		p_input = config.get_input(config.getch())
+		print("Initializing enemies, bricks ...")
+		if not (spawn(config._enemy, config.enemies[level], bd) and \
+				spawn(config._bricks, config.bricks[level], bd)):
+			print("Object Spawn Error")
+			return False
+		
+		print("Objects spawned successfully", "Rendering board", sep = "\n")
+		sleep(1)
 
-		if p_input == config.QUIT:
-			break
-
-		bd.process_input(player, p_input)
-		bd.update_frame()
 		bd.render()
 
-	bd.clear_storage()
-	for c, player in enumerate(bd.players):
-		print("Player %d score :" % c, player.score)
+		p_input = -1
+		# main loop which renders the game
+		while True:
+			print(	config.printcc("'q' : quit | 'b' : drop bomb || Lives ", 'Gray') + \
+					config.printcc('%s' % (player.lives * '♥ '), 'Red') + \
+					config.printcc('| Bombs ', 'Gray') + \
+					config.printcc('%s' % (player.bombs * '💣 '), 'Dark Gray') + \
+				 	config.printcc("| F%d " % bd.frame_counter, 'Gray'))
+			
+			try:
+				bd.is_over(player)
+			except Exception as exc:
+				print(config.printcc(exc.args[0], 'Gray'))
+				break
 
-	sleep(3)
-	print("Press ANY KEY to exit")
-	a = config.getch()
-	system('reset')
+			p_input = config.get_key(config.get_input())
+					
+			if p_input == config.QUIT:
+				break
 
+			bd.process_input(player, p_input)
+			bd.update_frame()
+			bd.render()
+
+		bd.clear_storage()
+		for c, player in enumerate(bd.players):
+			print(config.printcc("Player %d score : %d" % (c, player.score), 'White'))
+
+		sleep(3)
+		print(config.printcc("Press ANY KEY to exit | Press 'r' to restart", 'Gray'))
+		a = config._getch()
+		system('reset')
 
 if __name__ == '__main__':
 	main()

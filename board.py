@@ -122,7 +122,7 @@ class Board:
 				for x_i, y_i in bomb.blast_radius:
 					# if a wall blocks the way remove the blast coords
 					try:
-						if np.all(self._b[y_i - 1 : y_i - 1 + height, \
+						if np.any(self._b[y_i - 1 : y_i - 1 + height, \
 							x_i - 1 : x_i - 1 + width] == Wall(0, 0).structure):
 							raise IndexError
 					except:
@@ -347,9 +347,11 @@ class Board:
 		for row in range(self.height):
 			for col in range(self.width):
 				try:
-					sys.stdout.write(temp_board[row, col].decode()) 
+					sys.stdout.write(config.\
+						getcc(temp_board[row, col].decode())) 
 				except:
-					sys.stdout.write(temp_board[row, col]) 
+					sys.stdout.write(config.\
+						getcc(temp_board[row, col])) 
 			sys.stdout.write("\n")
 		del temp_board
 

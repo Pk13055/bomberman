@@ -71,12 +71,11 @@ _allowed_inputs = {
 	QUIT 	: ['q']
 }
 
-def get_input(key):
-	for x in _allowed_inputs:
-		if key in _allowed_inputs[x]:
-			return x
-	return INVALID
-
+def get_key(key):
+    for x in _allowed_inputs:
+        if key in _allowed_inputs[x]:
+            return x
+    return INVALID
 
 # Gets a single character from standard input.  Does not echo to the screen.
 class _Getch:
@@ -114,4 +113,75 @@ class _GetchWindows:
         return msvcrt.getch()
 
 
-getch = _Getch()
+_getch = _Getch()
+
+class AlarmException(Exception):
+    pass
+
+def alarmHandler(signum, frame):
+    raise AlarmException
+
+def get_input(timeout = 1):
+    import signal
+    signal.signal(signal.SIGALRM, alarmHandler)
+    signal.alarm(timeout)
+    try:
+        text = _getch()
+        signal.alarm(0)
+        return text
+    except AlarmException:
+        print("\n Prompt timeout. Continuing...")
+    signal.signal(signal.SIGALRM, signal.SIG_IGN)
+    return ''
+
+# for printing colored people
+colors = {
+    'Black'            : '\x1b[0;30m',
+    'Blue'             : '\x1b[0;34m',
+    'Green'            : '\x1b[0;32m',
+    'Cyan'             : '\x1b[0;36m',
+    'Red'              : '\x1b[0;31m',
+    'Purple'           : '\x1b[0;35m',
+    'Brown'            : '\x1b[0;33m',
+    'Gray'             : '\x1b[0;37m',
+    'Dark Gray'        : '\x1b[1;30m',
+    'Light Blue'       : '\x1b[1;34m',
+    'Light Green'      : '\x1b[1;32m',
+    'Light Cyan'       : '\x1b[1;36m',
+    'Light Red'        : '\x1b[1;31m',
+    'Light Purple'     : '\x1b[1;35m',
+    'Yellow'           : '\x1b[1;33m',
+    'White'            : '\x1b[1;37m'
+}
+ENDC  = '\x1b[0m'
+
+def getcc(ch):
+    
+    try:
+        if ch == _wall:
+            color = 'Dark Gray'
+        elif ch == _bomb_man:
+            color = 'Blue'
+        elif ch == _enemy:
+            color = 'Red'
+        elif ch == _bricks:
+            color = 'Brown'
+        elif ch == _expl:
+            color = 'Yellow'
+        elif ch in [str(x) for x in range(10)]:
+            color = 'White'
+        elif ch == '[' or ch == ']':
+            color = 'Purple'
+        else:
+            color = 'None'
+        return colors[color] + ch + ENDC
+    except KeyError:
+        return ch
+
+def printcc(st, color):
+    try:
+        return colors[color] + st + ENDC
+    except KeyError:
+        return st
+
+
