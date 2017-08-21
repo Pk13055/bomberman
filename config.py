@@ -36,6 +36,7 @@ enemies = [0, 2, 3, 4]
 bricks 	= [0, 5, 7, 9]
 lives   = [10, 3, 5, 7]
 bombs   = [20, 5, 6, 7]
+timelimit = [100, 90, 90, 80]
 timers  = [
     [5],
     [5],
@@ -158,7 +159,9 @@ ENDC  = '\x1b[0m'
 def getcc(ch):
     
     try:
-        if ch == _wall:
+        if ch == _empty:
+            return ch
+        elif ch == _wall:
             color = 'Dark Gray'
         elif ch == _bomb_man:
             color = 'Blue'

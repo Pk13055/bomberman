@@ -65,19 +65,25 @@ def main():
 
 		bd.render()
 
+		is_clean = False
 		p_input = -1
 		# main loop which renders the game
-		while True:
+		st_time = datetime.datetime.now()
+		while (datetime.datetime.now() - st_time) <= \
+			datetime.timedelta(seconds = config.timelimit[level]):
+			
 			print(	config.printcc("'q' : quit | 'b' : drop bomb || Lives ", 'Gray') + \
 					config.printcc('%s' % (player.lives * '♥ '), 'Red') + \
 					config.printcc('| Bombs ', 'Gray') + \
 					config.printcc('%s' % (player.bombs * '💣 '), 'Dark Gray') + \
-				 	config.printcc("| F%d " % bd.frame_counter, 'Gray'))
+				 	config.printcc("| T : %d " % (config.timelimit[level] - (datetime.datetime.now() \
+				 			- st_time).seconds), 'Gray'))
 			
 			try:
 				bd.is_over(player)
 			except Exception as exc:
 				print(config.printcc(exc.args[0], 'Gray'))
+				is_clean = True
 				break
 
 			p_input = config.get_key(config.get_input())
@@ -89,6 +95,9 @@ def main():
 			bd.update_frame()
 			bd.render()
 
+		if not is_clean:
+			print(config.printcc("TIME UP!", 'Gray'))
+		
 		bd.clear_storage()
 		for c, player in enumerate(bd.players):
 			print(config.printcc("Player %d score : %d" % (c, player.score), 'White'))
