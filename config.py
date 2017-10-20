@@ -16,15 +16,15 @@ _empty = " "
 
 # types of objects
 types = {
-	
-	_empty : "Unassigned",
-	
-	_wall : "Wall",
-	_bomb : "Bomb",
-	_bricks : "Bricks",
-	
-	_bomb_man : "Bomber",
-	_enemy : "Enemy"
+
+    _empty : "Unassigned",
+
+    _wall : "Wall",
+    _bomb : "Bomb",
+    _bricks : "Bricks",
+
+    _bomb_man : "Bomber",
+    _enemy : "Enemy"
 }
 # scores
 scores = {
@@ -33,11 +33,11 @@ scores = {
 }
 # number of properties per level (0 is debug)
 enemies = [0, 2, 3, 4]
-bricks 	= [0, 5, 7, 9]
-lives   = [10, 3, 5, 7]
-bombs   = [20, 5, 6, 7]
+bricks = [0, 5, 7, 9]
+lives = [10, 3, 5, 7]
+bombs = [20, 5, 6, 7]
 timelimit = [100, 90, 90, 80]
-timers  = [
+timers = [
     [5],
     [5],
     [5, 7],
@@ -49,12 +49,12 @@ x_fac, y_fac = (4, 2)
 
 
 '''
-	Allow certain inputs and translate to easier to read format
-	UP : 0
-	DOWN : 1
-	LEFT : 2
-	RIGHT : 3
-	BOMB : 4
+    Allow certain inputs and translate to easier to read format
+    UP : 0
+    DOWN : 1
+    LEFT : 2
+    RIGHT : 3
+    BOMB : 4
 '''
 
 # key presses
@@ -63,13 +63,13 @@ DIR = [UP, DOWN, LEFT, RIGHT]
 INVALID = -1
 
 # allowed inputs
-_allowed_inputs = { 
-	UP 		: ['w', '\x1b[A'], \
-	DOWN 	: ['s', '\x1b[B'], \
-	LEFT 	: ['a', '\x1b[D'], \
-	RIGHT 	: ['d', '\x1b[C'], \
-	BOMB 	: ['b'],		   \
-	QUIT 	: ['q']
+_allowed_inputs = {
+    UP      : ['w', '\x1b[A'], \
+    DOWN    : ['s', '\x1b[B'], \
+    LEFT    : ['a', '\x1b[D'], \
+    RIGHT   : ['d', '\x1b[C'], \
+    BOMB    : ['b'],           \
+    QUIT    : ['q']
 }
 
 def get_key(key):
@@ -80,21 +80,29 @@ def get_key(key):
 
 # Gets a single character from standard input.  Does not echo to the screen.
 class _Getch:
+
     def __init__(self):
         try:
             self.impl = _GetchWindows()
         except ImportError:
             self.impl = _GetchUnix()
 
-    def __call__(self): return self.impl()
+
+    def __call__(self):
+        return self.impl()
 
 
 class _GetchUnix:
+
+
     def __init__(self):
         import tty, sys
 
+
     def __call__(self):
-        import sys, tty, termios
+        import sys
+        import tty
+        import termios
         fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(fd)
         try:
@@ -106,8 +114,10 @@ class _GetchUnix:
 
 
 class _GetchWindows:
+
     def __init__(self):
         import msvcrt
+
 
     def __call__(self):
         import msvcrt
@@ -116,13 +126,16 @@ class _GetchWindows:
 
 _getch = _Getch()
 
+
 class AlarmException(Exception):
     pass
+
 
 def alarmHandler(signum, frame):
     raise AlarmException
 
-def get_input(timeout = 1):
+
+def get_input(timeout=1):
     import signal
     signal.signal(signal.SIGALRM, alarmHandler)
     signal.alarm(timeout)
@@ -154,10 +167,12 @@ colors = {
     'Yellow'           : '\x1b[1;33m',
     'White'            : '\x1b[1;37m'
 }
-ENDC  = '\x1b[0m'
+
+ENDC = '\x1b[0m'
+
 
 def getcc(ch):
-    
+
     try:
         if ch == _empty:
             return ch
@@ -181,10 +196,9 @@ def getcc(ch):
     except KeyError:
         return ch
 
+
 def printcc(st, color):
     try:
         return colors[color] + st + ENDC
     except KeyError:
         return st
-
-
