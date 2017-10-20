@@ -131,7 +131,7 @@ def get_input(timeout = 1):
         signal.alarm(0)
         return text
     except AlarmException:
-        print("\n Prompt timeout. Continuing...")
+        pass
     signal.signal(signal.SIGALRM, signal.SIG_IGN)
     return ''
 

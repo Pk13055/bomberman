@@ -69,6 +69,7 @@ def main():
 		p_input = -1
 		# main loop which renders the game
 		st_time = datetime.datetime.now()
+		prev_round = datetime.datetime.now()
 		while (datetime.datetime.now() - st_time) <= \
 			datetime.timedelta(seconds = config.timelimit[level]):
 			
@@ -91,8 +92,12 @@ def main():
 			if p_input == config.QUIT:
 				break
 
+			cur_round = datetime.datetime.now()
 			bd.process_input(player, p_input)
-			bd.update_frame()
+			if (cur_round - prev_round) >= datetime.timedelta(seconds = 1):
+				bd.update_frame()
+				prev_round = cur_round
+				
 			bd.render()
 
 		if not is_clean:
